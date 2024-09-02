@@ -54,3 +54,4 @@ go get golang.org/x/oauth2/google
 
 ## Set up the program
 At first lunch...
+- [ ] TODO - `credentials.json`
