@@ -95,8 +95,59 @@ func main() {
 
 	fmt.Println("Task Lists:")
 	if len(r.Items) > 0 {
+		force_send_fields := [](string){
+			"AssignmentInfo",
+			"Completed",
+			"Deleted",
+			"Due",
+			"Etag",
+			"Hidden",
+			"Id",
+			"Kind",
+			// "Links",
+			"Notes",
+			"Parent",
+			"Position",
+			"SelfLink",
+			"Status",
+			"Title",
+			"Updated",
+			"WebViewLink",
+			// "ForceSendFields",
+			// "NullFields"
+		}
 		for _, i := range r.Items {
 			fmt.Printf("%s (%s)\n", i.Title, i.Id)
+			i.ForceSendFields = force_send_fields[:] // inutile
+			t, err := srv.Tasks.List(i.Id).Do()
+			if err != nil {
+				log.Fatalf("Unable to retrieve tasks from task lists. %v", err)
+			}
+			for _, j := range t.Items {
+				// j.ForceSendFields = append(j.ForceSendFields, "Completed")
+				fmt.Printf("Title: %s (%s)\n", j.Title, j.Id)
+
+				// fmt.Printf("\tAssignmentInfo: %s", j.AssignmentInfo)
+				// fmt.Printf("\tCompleted: %s", j.Completed)
+				fmt.Printf("\tDeleted: %t\n", j.Deleted)
+				fmt.Printf("\tDue: %s\n", j.Due)
+				fmt.Printf("\tEtag: %s\n", j.Etag)
+				fmt.Printf("\tHidden: %t\n", j.Hidden)
+				fmt.Printf("\tId: %s\n", j.Id)
+				fmt.Printf("\tKind: %s\n", j.Kind)
+				fmt.Printf("\tLinks: %d\n", len(j.Links))
+				fmt.Printf("\tNotes: %s\n", j.Notes)
+				fmt.Printf("\tParent: %s\n", j.Parent)
+				fmt.Printf("\tPosition: %s\n", j.Position)
+				fmt.Printf("\tSelfLink: %s\n", j.SelfLink)
+				fmt.Printf("\tStatus: %s\n", j.Status)
+				fmt.Printf("\tTitle: %s\n", j.Title)
+				fmt.Printf("\tUpdated: %s\n", j.Updated)
+				fmt.Printf("\tWebViewLink: %s\n", j.WebViewLink)
+				// fmt.Printf("\tForceSendFields: %s\n",j.ForceSendFields)
+				// fmt.Printf("\tNullField: %ss\n"j.NullField)
+			}
+			fmt.Println("-- END task list --")
 		}
 	} else {
 		fmt.Print("No task lists found.")
