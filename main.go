@@ -69,6 +69,17 @@ func saveToken(path string, token *oauth2.Token) {
 	json.NewEncoder(f).Encode(token)
 }
 
+// Creating new tasklist
+func createTasksList(title string, srv *tasks.Service) {
+	fmt.Println("Creating new tasklist!")
+	var testTaskList tasks.TaskList
+	testTaskList.Title = title
+	_, err := srv.Tasklists.Insert(&testTaskList).Do()
+	if err != nil {
+		log.Fatalf("Error insert new task list %v", err)
+	}
+}
+
 func main() {
 	ctx := context.Background()
 	b, err := os.ReadFile("credentials.json")
@@ -77,7 +88,7 @@ func main() {
 	}
 
 	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b, tasks.TasksReadonlyScope)
+	config, err := google.ConfigFromJSON(b, tasks.TasksScope) // TasksReadonlyScope
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
@@ -94,31 +105,11 @@ func main() {
 	}
 
 	fmt.Println("Task Lists:")
+	ids := map[string]string{}
 	if len(r.Items) > 0 {
-		force_send_fields := [](string){
-			"AssignmentInfo",
-			"Completed",
-			"Deleted",
-			"Due",
-			"Etag",
-			"Hidden",
-			"Id",
-			"Kind",
-			// "Links",
-			"Notes",
-			"Parent",
-			"Position",
-			"SelfLink",
-			"Status",
-			"Title",
-			"Updated",
-			"WebViewLink",
-			// "ForceSendFields",
-			// "NullFields"
-		}
 		for _, i := range r.Items {
 			fmt.Printf("%s (%s)\n", i.Title, i.Id)
-			i.ForceSendFields = force_send_fields[:] // inutile
+			ids[i.Title] = i.Id
 			t, err := srv.Tasks.List(i.Id).Do()
 			if err != nil {
 				log.Fatalf("Unable to retrieve tasks from task lists. %v", err)
@@ -152,6 +143,16 @@ func main() {
 	} else {
 		fmt.Print("No task lists found.")
 	}
-}
+	// Creating new tasklist
+	createTasksList("Testing new fun", srv)
 
-// [END tasks_quickstart]
+	// Creating a new Task
+	fmt.Println("Creating new Task")
+	var testTask tasks.Task
+	testTask.Title = "Test API creation"
+	testTask.Notes = "Created using the google Go tasks API"
+	_, err = srv.Tasks.Insert(ids["Test creating TaskList"], &testTask).Do()
+	if err != nil {
+		log.Fatalf("Error creating new task %v", err)
+	}
+}
