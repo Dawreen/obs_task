@@ -80,6 +80,14 @@ func createTasksList(title string, srv *tasks.Service) {
 	}
 }
 
+func createTask(idTaskList string, task *tasks.Task, srv *tasks.Service) {
+	fmt.Println("Creating new Task")
+	_, err := srv.Tasks.Insert(idTaskList, task).Do()
+	if err != nil {
+		log.Fatalf("Error creating new task %v", err)
+	}
+}
+
 func main() {
 	ctx := context.Background()
 	b, err := os.ReadFile("credentials.json")
@@ -105,11 +113,11 @@ func main() {
 	}
 
 	fmt.Println("Task Lists:")
-	ids := map[string]string{}
+	// ids := map[string]string{}
 	if len(r.Items) > 0 {
 		for _, i := range r.Items {
 			fmt.Printf("%s (%s)\n", i.Title, i.Id)
-			ids[i.Title] = i.Id
+			// ids[i.Title] = i.Id
 			t, err := srv.Tasks.List(i.Id).Do()
 			if err != nil {
 				log.Fatalf("Unable to retrieve tasks from task lists. %v", err)
@@ -142,17 +150,5 @@ func main() {
 		}
 	} else {
 		fmt.Print("No task lists found.")
-	}
-	// Creating new tasklist
-	createTasksList("Testing new fun", srv)
-
-	// Creating a new Task
-	fmt.Println("Creating new Task")
-	var testTask tasks.Task
-	testTask.Title = "Test API creation"
-	testTask.Notes = "Created using the google Go tasks API"
-	_, err = srv.Tasks.Insert(ids["Test creating TaskList"], &testTask).Do()
-	if err != nil {
-		log.Fatalf("Error creating new task %v", err)
 	}
 }

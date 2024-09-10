@@ -1,8 +1,6 @@
-module obs_task
+module obsidian_tasks
 
 go 1.22.2
-
-replace obs_tasks/task_calls => ./src/task_calls
 
 require (
 	golang.org/x/oauth2 v0.23.0
