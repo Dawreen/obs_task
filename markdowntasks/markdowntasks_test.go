@@ -1,7 +1,6 @@
 package markdowntasks
 
 import (
-	"regexp"
 	"slices"
 	"testing"
 )
@@ -26,10 +25,35 @@ func TestGetAllTasksMdPath(t *testing.T) {
 }
 
 func TestDoneTaskMD(t *testing.T) {
-	input := "This"
-	want := regexp.MustCompile(`\bThat\b`)
-	msg, err := DoneTaskMD(input)
-	if !want.MatchString(msg) || err != nil {
-		t.Fatalf(`This = %q, %v, want match for %#q, nil`, msg, err, want)
+	wantBefore := MdTask{
+		"task 1",
+		"files/file_tasks.md|task 1",
+		false,
+	}
+	wantAfter := MdTask{
+		"task 1",
+		"files/file_tasks.md|task 1",
+		true,
+	}
+	path := "files/file_tasks.md"
+	taskTitle := "task 1"
+
+	allTasks, err := getAllTasksMdPath(".")
+	if !slices.Contains(allTasks, wantBefore) {
+		return // task 1 is already done (upper test will fail)
+	}
+	err = DoneTaskMD(path, taskTitle)
+	if err != nil {
+		t.Fatalf(`Got error: %v`, err)
+	}
+
+	allTasks, err = getAllTasksMdPath(".")
+
+	if err == nil && !slices.Contains(allTasks, wantAfter) {
+		t.Fatalf(`Task %v was NOT updated to %v, error: %v`, wantBefore, wantAfter, err)
+	} else if err == nil && slices.Contains(allTasks, wantAfter) {
+		return
+	} else {
+		t.Fatalf(`No update was performed`)
 	}
 }
