@@ -8,8 +8,14 @@ import (
 	"strings"
 )
 
-func getAllTasksMDPath(rootPath string) ([]string, error) {
-	var allTasks []string
+type MdTask struct {
+	Title  string
+	Id     string
+	Status bool
+}
+
+func getAllTasksMdPath(rootPath string) ([]MdTask, error) {
+	var allTasks []MdTask
 
 	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -17,7 +23,7 @@ func getAllTasksMDPath(rootPath string) ([]string, error) {
 		}
 
 		if !d.IsDir() && strings.HasSuffix(d.Name(), ".md") {
-			fileTasks, err := getAllTasksMD(path)
+			fileTasks, err := getAllTasksMd(path)
 			if err != nil {
 				return err
 			}
@@ -34,20 +40,34 @@ func getAllTasksMDPath(rootPath string) ([]string, error) {
 	return allTasks, nil
 }
 
-func getAllTasksMD(filePath string) ([]string, error) {
+func getAllTasksMd(filePath string) ([]MdTask, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	var allTasks []string
+	var allTasks []MdTask
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.Contains(line, "- [ ]") {
 			task := strings.TrimSpace(strings.TrimPrefix(line, "- [ ]"))
-			allTasks = append(allTasks, task)
+			allTasks = append(allTasks,
+				MdTask{
+					task,
+					filePath + "|" + task,
+					false,
+				})
+		}
+		if strings.Contains(line, "- [X]") {
+			task := strings.TrimSpace(strings.TrimPrefix(line, "- [X]"))
+			allTasks = append(allTasks,
+				MdTask{
+					task,
+					filePath + "|" + task,
+					true,
+				})
 		}
 	}
 

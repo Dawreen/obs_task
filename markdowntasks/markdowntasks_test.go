@@ -6,21 +6,21 @@ import (
 	"testing"
 )
 
-func TestGetAllTasksMD(t *testing.T) {
-	want_tasks := []string{
-		"task 1",
-		"task 2 in header 2",
-		"Task done",
-		"Task todo in TODO header",
+func TestGetAllTasksMdPath(t *testing.T) {
+	want_tasks := []MdTask{
+		{"task 1", "files/file_tasks.md|task 1", false},
+		{"task 2 in header 2", "files/file_tasks.md|task 2 in header 2", false},
+		{"Task done", "files/file_tasks.md|Task done", true},
+		{"Task todo in TODO header", "files/file_tasks.md|Task todo in TODO header", false},
 	}
 	input := "files"
-	msg, err := getAllTasksMDPath(input)
+	msg, err := getAllTasksMdPath(input)
 	if err != nil {
 		t.Fatalf(`Got error: %v`, err)
 	}
 	for _, task := range want_tasks {
 		if !slices.Contains(msg, task) {
-			t.Fatalf(`%q is not present in returned tasks (= %q)`, task, msg)
+			t.Fatalf(`%v is not present in returned tasks (= %v)`, task, msg)
 		}
 	}
 }
