@@ -1,2 +1,6 @@
 credentials.json
 token.json
+extract
+task_calls
+tests
+.DS_Store

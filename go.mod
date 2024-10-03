@@ -3,6 +3,7 @@ module obsidian_tasks
 go 1.22.2
 
 require (
+	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
 	golang.org/x/oauth2 v0.23.0
 	google.golang.org/api v0.196.0
 )
