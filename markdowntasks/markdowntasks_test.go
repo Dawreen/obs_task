@@ -1,25 +1,24 @@
 package markdowntasks
 
 import (
-	"slices"
 	"testing"
 )
 
 func TestGetAllTasksMdPath(t *testing.T) {
-	want_tasks := []MdTask{
-		{"task 1", "files/file_tasks.md|task 1", false},
-		{"task 2 in header 2", "files/file_tasks.md|task 2 in header 2", false},
-		{"Task done", "files/file_tasks.md|Task done", true},
-		{"Task todo in TODO header", "files/file_tasks.md|Task todo in TODO header", false},
+	want_tasks := map[string]MdTask{
+		"files/file_tasks.md|task 1":                   {"task 1", false},
+		"files/file_tasks.md|task 2 in header 2":       {"task 2 in header 2", false},
+		"files/file_tasks.md|Task done":                {"Task done", true},
+		"files/file_tasks.md|Task todo in TODO header": {"Task todo in TODO header", false},
 	}
 	input := "files"
-	msg, err := getAllTasksMdPath(input)
+	allTasksMdMap, err := getAllTasksMdPath(input)
 	if err != nil {
 		t.Fatalf(`Got error: %v`, err)
 	}
-	for _, task := range want_tasks {
-		if !slices.Contains(msg, task) {
-			t.Fatalf(`%v is not present in returned tasks (= %v)`, task, msg)
+	for key, value := range want_tasks {
+		if allTasksMdMap[key] != value {
+			t.Fatalf(`%v is not present in returned tasks (= %v)`, value, allTasksMdMap)
 		}
 	}
 }
@@ -27,33 +26,34 @@ func TestGetAllTasksMdPath(t *testing.T) {
 func TestDoneTaskMD(t *testing.T) {
 	wantBefore := MdTask{
 		"task 1",
-		"files/file_tasks.md|task 1",
 		false,
 	}
 	wantAfter := MdTask{
 		"task 1",
-		"files/file_tasks.md|task 1",
 		true,
 	}
 	path := "files/file_tasks.md"
 	taskTitle := "task 1"
+	key := path + "|" + taskTitle
 
-	allTasks, err := getAllTasksMdPath(".")
-	if !slices.Contains(allTasks, wantBefore) {
-		return // task 1 is already done (upper test will fail)
+	allTasksMap, err := getAllTasksMdPath(".")
+	_, ok := allTasksMap[key]
+	if !ok {
+		return // task 1 does not exist
 	}
-	err = DoneTaskMD(path, taskTitle)
+	err = DoneTaskMd(path, taskTitle)
 	if err != nil {
 		t.Fatalf(`Got error: %v`, err)
 	}
 
-	allTasks, err = getAllTasksMdPath(".")
-
-	if err == nil && !slices.Contains(allTasks, wantAfter) {
-		t.Fatalf(`Task %v was NOT updated to %v, error: %v`, wantBefore, wantAfter, err)
-	} else if err == nil && slices.Contains(allTasks, wantAfter) {
+	allTasksMap, err = getAllTasksMdPath(".")
+	if err != nil {
+		t.Fatalf(`Got error: %v`, err)
+	}
+	if allTasksMap[key].Status == true {
 		return
-	} else {
-		t.Fatalf(`No update was performed`)
+	}
+	if allTasksMap[key].Status == false {
+		t.Fatalf(`Task %v was NOT updated to %v, error: %v`, wantBefore, wantAfter, err)
 	}
 }

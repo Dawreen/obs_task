@@ -4,3 +4,4 @@ extract
 task_calls
 tests
 .DS_Store
+auth_files
