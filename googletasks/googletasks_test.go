@@ -3,10 +3,12 @@ package googletasks
 import (
 	"regexp"
 	"testing"
+
+	"google.golang.org/api/tasks/v1"
 )
 
 func TestGetAllTasksGoogle(t *testing.T) {
-	// taskListTitle := "Test obsidian_tasks"
+	// taskListId := "VGJNRnByS3dTZk9aVy02MQ"
 	taskTitle1 := "Task with subs"
 	taskTitle2 := "sub_task1"
 	taskTitle3 := "sub_task2"
@@ -28,11 +30,30 @@ func TestGetAllTasksGoogle(t *testing.T) {
 	}
 }
 
-func TestDoneTaskMD(t *testing.T) {
+func TestDoneTaskGoogle(t *testing.T) {
 	input := "This"
 	want := regexp.MustCompile(`\bThat\b`)
 	msg, err := DoneTaskGoogle(input)
 	if !want.MatchString(msg) || err != nil {
 		t.Fatalf(`This = %q, %v, want match for %#q, nil`, msg, err, want)
+	}
+}
+
+func TestAddTaskGoogle(t *testing.T) {
+	taskListId := "VGJNRnByS3dTZk9aVy02MQ"
+	taskTitle := "Testing task creation in Go"
+	taskNotes := "path will be here"
+
+	taskGoogle := tasks.Task{
+		Title: taskTitle,
+		Notes: taskNotes,
+	}
+
+	retTaskGoogle, err := AddTaskGoogle(taskListId, &taskGoogle)
+	if err != nil {
+		t.Fatalf(`Got error: %v`, err)
+	}
+	if taskTitle != retTaskGoogle.Title && taskNotes != retTaskGoogle.Notes {
+		t.Fatalf(`title %v != %v or notes %v != %v`, taskTitle, retTaskGoogle.Title, taskNotes, retTaskGoogle.Notes)
 	}
 }

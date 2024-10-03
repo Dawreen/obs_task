@@ -69,7 +69,7 @@ func saveToken(path string, token *oauth2.Token) {
 	json.NewEncoder(f).Encode(token)
 }
 
-func GetAllTasksGoogle() map[string]tasks.Task {
+func getService() (*tasks.Service, error) {
 	ctx := context.Background()
 	b, err := os.ReadFile("../auth_files/credentials.json")
 	if err != nil {
@@ -82,7 +82,11 @@ func GetAllTasksGoogle() map[string]tasks.Task {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
 	client := getClient(config)
-	srv, err := tasks.NewService(ctx, option.WithHTTPClient(client))
+	return tasks.NewService(ctx, option.WithHTTPClient(client))
+}
+
+func GetAllTasksGoogle() map[string]tasks.Task {
+	srv, err := getService()
 	if err != nil {
 		log.Fatalf("Unable to retrieve tasks Client %v", err)
 	}
@@ -111,4 +115,13 @@ func GetAllTasksGoogle() map[string]tasks.Task {
 
 func DoneTaskGoogle(input string) (string, error) {
 	return "That", nil
+}
+
+func AddTaskGoogle(taskListId string, taskGoogle *tasks.Task) (*tasks.Task, error) {
+	srv, err := getService()
+	if err != nil {
+		log.Fatalf("Unable to retrieve tasks Client %v", err)
+	}
+
+	return srv.Tasks.Insert(taskListId, taskGoogle).Do()
 }
