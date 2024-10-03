@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	fmt.Println(markdowntasks.GetAllTasksMD("Hello"))
+	// fmt.Println(markdowntasks.GetAllTasksMD("Hello"))
 	fmt.Println(markdowntasks.DoneTaskMD("input string"))
 
 	fmt.Println(googletasks.GetAllTasksGoogle("Hello"))
