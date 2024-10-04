@@ -163,3 +163,11 @@ func AddTaskGoogle(taskListId string, taskGoogle *tasks.Task) (*tasks.Task, erro
 
 	return srv.Tasks.Insert(taskListId, taskGoogle).Do()
 }
+
+func SetParentGoogle(taskListId string, taskIdGoogle string, taskParentId string) (*tasks.Task, error) {
+	srv, err := getService()
+	if err != nil {
+		log.Fatalf("Unable to retrieve tasks Client %v", err)
+	}
+	return srv.Tasks.Move(taskListId, taskIdGoogle).Parent(taskParentId).Do()
+}

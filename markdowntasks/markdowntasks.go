@@ -66,7 +66,8 @@ func getAllTasksMd(filePath string) (map[string]MdTask, error) {
 		}
 	}
 	if hasTasks {
-		allTasksMap[filePath] = MdTask{filepath.Base(strings.TrimSuffix(filePath, ".md")), filePath, false}
+		fileName := filepath.Base(strings.TrimSuffix(filePath, ".md"))
+		allTasksMap[filePath+"|"+fileName] = MdTask{fileName, filePath, false}
 	}
 
 	if err := scanner.Err(); err != nil {

@@ -85,3 +85,31 @@ func TestAddTaskGoogle(t *testing.T) {
 		t.Fatalf(`title %v != %v or notes %v != %v`, taskTitle, retTaskGoogle.Title, taskNotes, retTaskGoogle.Notes)
 	}
 }
+
+func TestSetParent(t *testing.T) {
+	taskListId := "VGJNRnByS3dTZk9aVy02MQ"
+
+	taskParent := "This is parent test"
+	taskChild := "Child of 'This is parent test'"
+
+	taskParentG := tasks.Task{
+		Title: taskParent,
+	}
+	taskParentGoogle, err := AddTaskGoogle(taskListId, &taskParentG)
+	if err != nil {
+		t.Fatalf(`Got error: %v`, err)
+	}
+	taskChildG := tasks.Task{
+		Title: taskChild,
+	}
+	taskChildGoogle, err := AddTaskGoogle(taskListId, &taskChildG)
+	if err != nil {
+		t.Fatalf(`Got error: %v`, err)
+	}
+
+	taskMoved, err := SetParentGoogle(taskListId, taskChildGoogle.Id, taskParentGoogle.Id)
+
+	if err != nil && taskMoved.Id != taskChildGoogle.Id {
+		t.Fatalf(`Parent not set %v`, err)
+	}
+}

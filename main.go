@@ -1,8 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"path/filepath"
+	"strings"
 
 	"obsidian_tasks/googletasks"
 	"obsidian_tasks/markdowntasks"
@@ -12,33 +13,28 @@ import (
 
 func main() {
 	path := "."
-	// taskListTitle := "Obsidian Tasks"
-	taskListTitle := "Test obsidian_tasks"
+	taskListTitle := "Obsidian Tasks"
+	// taskListTitle := "Test obsidian_tasks"
 	taskListId, err := googletasks.GetTasksListId(taskListTitle)
 	if err != nil {
 		log.Fatalf(`Got error: %v`, err)
 	}
 
-	fmt.Println("Starting search for tasks in markdown files!")
 	allTasksMd, err := markdowntasks.GetAllTasksMdPath(path)
 	if err != nil {
 		log.Fatalf(`Got error: %v`, err)
 	}
-	fmt.Printf("%v tasks found\n\n", len(allTasksMd))
 
-	fmt.Println("Search on GoogleTasks!")
 	allTasksGoogle := googletasks.GetAllTasksGoogle(taskListTitle)
-	fmt.Printf("%v tasks found\n\n", len(allTasksGoogle))
 
-	fmt.Println("Update all tasks!")
+	mdIdMap := make(map[string]string)
 
 	for key, value := range allTasksGoogle {
 		if value.Status == "completed" && !allTasksMd[key].Status {
-			fmt.Println("Completed task found")
 			// update markdown
 			err = markdowntasks.DoneTaskMd(value.Notes, value.Title)
 			if err != nil {
-				log.Fatalf(`Got error: %v`, err)
+				continue
 			}
 			delete(allTasksMd, key)
 		}
@@ -51,23 +47,40 @@ func main() {
 			delete(allTasksMd, key)
 		}
 		if value.Status == "needsAction" && !allTasksMd[key].Status {
+			mdIdMap[key] = value.Id
 			delete(allTasksMd, key)
 		}
 	}
 
-	fmt.Println("Add new tasks to GoogleTasks!")
-
-	for _, value := range allTasksMd {
+	for key, value := range allTasksMd {
 		if !value.Status {
 			taskGoogle := tasks.Task{
 				Title: value.Title,
 				Notes: value.Path,
 			}
-			_, err = googletasks.AddTaskGoogle(taskListId, &taskGoogle)
+			newTaskGoogle, err := googletasks.AddTaskGoogle(taskListId, &taskGoogle)
 			if err != nil {
 				log.Fatalf(`Failed to create task! error: %v`, err)
 			}
+			mdIdMap[key] = newTaskGoogle.Id
 		}
-		// TODO gestion parent
+	}
+
+	for key, value := range mdIdMap {
+		pathTask := strings.Split(key, "|")
+		taskTitle := pathTask[1]
+		titleMd := filepath.Base(strings.TrimSuffix(pathTask[0], ".md"))
+		if taskTitle != titleMd {
+			// is child
+			keyParent := pathTask[0] + "|" + filepath.Base(strings.TrimSuffix(pathTask[0], ".md"))
+			_, err := googletasks.SetParentGoogle(taskListId, value, mdIdMap[keyParent])
+			if err != nil {
+				log.Fatalf(`Failed to move task! error: %v
+					%v
+					%v
+					%v
+					%v`, err, taskListId, value, mdIdMap[keyParent], keyParent)
+			}
+		}
 	}
 }
