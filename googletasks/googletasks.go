@@ -131,7 +131,7 @@ func GetAllTasksGoogle(taskListTitle string) map[string]tasks.Task {
 	if len(r.Items) > 0 {
 		for _, i := range r.Items {
 			if i.Title == taskListTitle {
-				t, err := srv.Tasks.List(i.Id).ShowHidden(true).Do()
+				t, err := srv.Tasks.List(i.Id).ShowHidden(true).MaxResults(100).Do()
 				if err != nil {
 					log.Fatalf("Unable to retrieve tasks from task lists. %v", err)
 				}

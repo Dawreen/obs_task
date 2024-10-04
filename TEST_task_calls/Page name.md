@@ -3,7 +3,7 @@ description
 
 ## TODO
 - [ ] activity ready
-- [X] activity done
+- [ ] activity done
 - [ ] activity with date? [2024-09-21]
 - [X] activity with tab under
 	tabbed

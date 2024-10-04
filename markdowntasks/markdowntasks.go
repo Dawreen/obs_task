@@ -2,6 +2,7 @@ package markdowntasks
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -38,6 +39,10 @@ func GetAllTasksMdPath(rootPath string) (map[string]MdTask, error) {
 
 	if err != nil {
 		return nil, err
+	}
+
+	if len(allTasksMap) > 100 {
+		return allTasksMap, errors.New("Can't go over 100 tasks")
 	}
 
 	return allTasksMap, nil

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"path/filepath"
 	"strings"
@@ -15,6 +16,9 @@ func main() {
 	path := "."
 	taskListTitle := "Obsidian Tasks"
 	// taskListTitle := "Test obsidian_tasks"
+
+	fmt.Println("Start synch " + taskListTitle)
+
 	taskListId, err := googletasks.GetTasksListId(taskListTitle)
 	if err != nil {
 		log.Fatalf(`Got error: %v`, err)
@@ -24,12 +28,17 @@ func main() {
 	if err != nil {
 		log.Fatalf(`Got error: %v`, err)
 	}
+	fmt.Printf("Found %v tasks on Obsidian\n\n", len(allTasksMd))
 
 	allTasksGoogle := googletasks.GetAllTasksGoogle(taskListTitle)
+	fmt.Printf("Found %v tasks on GoogleTasks\n\n", len(allTasksGoogle))
 
 	mdIdMap := make(map[string]string)
 
+	i := 1
 	for key, value := range allTasksGoogle {
+		fmt.Printf("\rOn checking: %d/%d", i, len(allTasksGoogle))
+		i++
 		if value.Status == "completed" && !allTasksMd[key].Status {
 			// update markdown
 			err = markdowntasks.DoneTaskMd(value.Notes, value.Title)
@@ -47,12 +56,18 @@ func main() {
 			delete(allTasksMd, key)
 		}
 		if value.Status == "needsAction" && !allTasksMd[key].Status {
-			mdIdMap[key] = value.Id
+			if value.Parent == "" {
+				mdIdMap[key] = value.Id
+			}
 			delete(allTasksMd, key)
 		}
 	}
 
+	i = 0
+	fmt.Println("\nAdding new tasks!")
 	for key, value := range allTasksMd {
+		fmt.Printf("\rAdding: %d/%d", i, len(allTasksMd))
+		i++
 		if !value.Status {
 			taskGoogle := tasks.Task{
 				Title: value.Title,
@@ -66,7 +81,11 @@ func main() {
 		}
 	}
 
+	i = 0
+	fmt.Println("\nSetting parent")
 	for key, value := range mdIdMap {
+		fmt.Printf("\rConnecting: %d/%d", i, len(mdIdMap))
+		i++
 		pathTask := strings.Split(key, "|")
 		taskTitle := pathTask[1]
 		titleMd := filepath.Base(strings.TrimSuffix(pathTask[0], ".md"))
@@ -83,4 +102,5 @@ func main() {
 			}
 		}
 	}
+	fmt.Println("\nSynch completed!")
 }
