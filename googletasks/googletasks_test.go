@@ -8,11 +8,12 @@ import (
 
 func TestGetAllTasksGoogle(t *testing.T) {
 	// taskListId := "VGJNRnByS3dTZk9aVy02MQ"
+	taskListTitle := "Test obsidian_tasks"
 	taskTitle1 := "Task with subs"
 	taskTitle2 := "sub_task1"
 	taskTitle3 := "sub_task2"
 
-	allTasksMap := GetAllTasksGoogle()
+	allTasksMap := GetAllTasksGoogle(taskListTitle)
 
 	_, ok1 := allTasksMap["|"+taskTitle1]
 	_, ok2 := allTasksMap["|"+taskTitle2]
@@ -30,7 +31,8 @@ func TestGetAllTasksGoogle(t *testing.T) {
 }
 
 func TestDoneTaskGoogle(t *testing.T) {
-	taskListId := "VGJNRnByS3dTZk9aVy02MQ"
+	wantTaskListId := "VGJNRnByS3dTZk9aVy02MQ"
+	taskListTitle := "Test obsidian_tasks"
 	taskTitle := "Testing task update with Go"
 	taskNotes := "Notes are here?"
 	taskIdMd := taskNotes + "|" + taskTitle
@@ -38,6 +40,12 @@ func TestDoneTaskGoogle(t *testing.T) {
 	taskGoogle := tasks.Task{
 		Title: taskTitle,
 		Notes: taskNotes,
+	}
+
+	taskListId, err := GetTasksListId(taskListTitle)
+	if err != nil && taskListId == wantTaskListId {
+		t.Fatalf(`Wasn't able to retrieve the TaskListId:
+		%v != %v, error: %v`, wantTaskListId, taskListId, err)
 	}
 
 	wantTask, err := AddTaskGoogle(taskListId, &taskGoogle)
@@ -52,7 +60,7 @@ func TestDoneTaskGoogle(t *testing.T) {
 		t.Fatalf(`Status of %v != %v`, updateTaskGoogle.Title, wantTask.Title)
 	}
 
-	allTasksMap := GetAllTasksGoogle()
+	allTasksMap := GetAllTasksGoogle(taskListTitle)
 
 	if allTasksMap[taskIdMd].Status != wantTask.Status {
 		t.Fatalf(`Status of %v != %v`, allTasksMap[taskIdMd].Title, wantTask.Title)
@@ -62,7 +70,7 @@ func TestDoneTaskGoogle(t *testing.T) {
 func TestAddTaskGoogle(t *testing.T) {
 	taskListId := "VGJNRnByS3dTZk9aVy02MQ"
 	taskTitle := "Testing task creation in Go"
-	taskNotes := "path will be here"
+	taskNotes := "path will be here again"
 
 	taskGoogle := tasks.Task{
 		Title: taskTitle,

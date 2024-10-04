@@ -13,10 +13,11 @@ import (
 
 type MdTask struct {
 	Title  string
+	Path   string
 	Status bool
 }
 
-func getAllTasksMdPath(rootPath string) (map[string]MdTask, error) {
+func GetAllTasksMdPath(rootPath string) (map[string]MdTask, error) {
 	allTasksMap := make(map[string]MdTask)
 
 	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, err error) error {
@@ -49,18 +50,23 @@ func getAllTasksMd(filePath string) (map[string]MdTask, error) {
 	}
 	defer file.Close()
 
+	hasTasks := false
 	allTasksMap := make(map[string]MdTask)
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.Contains(line, "- [ ]") {
+			hasTasks = true
 			task := strings.TrimSpace(strings.TrimPrefix(line, "- [ ]"))
-			allTasksMap[filePath+"|"+task] = MdTask{task, false}
+			allTasksMap[filePath+"|"+task] = MdTask{task, filePath, false}
 		}
 		if strings.Contains(line, "- [X]") {
 			task := strings.TrimSpace(strings.TrimPrefix(line, "- [X]"))
-			allTasksMap[filePath+"|"+task] = MdTask{task, true}
+			allTasksMap[filePath+"|"+task] = MdTask{task, filePath, true}
 		}
+	}
+	if hasTasks {
+		allTasksMap[filePath] = MdTask{filepath.Base(strings.TrimSuffix(filePath, ".md")), filePath, false}
 	}
 
 	if err := scanner.Err(); err != nil {

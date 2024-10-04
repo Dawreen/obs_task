@@ -6,13 +6,14 @@ import (
 
 func TestGetAllTasksMdPath(t *testing.T) {
 	want_tasks := map[string]MdTask{
-		"files/file_tasks.md|task 1":                   {"task 1", false},
-		"files/file_tasks.md|task 2 in header 2":       {"task 2 in header 2", false},
-		"files/file_tasks.md|Task done":                {"Task done", true},
-		"files/file_tasks.md|Task todo in TODO header": {"Task todo in TODO header", false},
+		"files/file_tasks.md":                          {"file_tasks", "files/file_tasks.md", false},
+		"files/file_tasks.md|task 1":                   {"task 1", "files/file_tasks.md", false},
+		"files/file_tasks.md|task 2 in header 2":       {"task 2 in header 2", "files/file_tasks.md", false},
+		"files/file_tasks.md|Task done":                {"Task done", "files/file_tasks.md", true},
+		"files/file_tasks.md|Task todo in TODO header": {"Task todo in TODO header", "files/file_tasks.md", false},
 	}
 	input := "files"
-	allTasksMdMap, err := getAllTasksMdPath(input)
+	allTasksMdMap, err := GetAllTasksMdPath(input)
 	if err != nil {
 		t.Fatalf(`Got error: %v`, err)
 	}
@@ -26,17 +27,19 @@ func TestGetAllTasksMdPath(t *testing.T) {
 func TestDoneTaskMD(t *testing.T) {
 	wantBefore := MdTask{
 		"task 1",
+		"files/file_tasks.md",
 		false,
 	}
 	wantAfter := MdTask{
 		"task 1",
+		"files/file_tasks.md",
 		true,
 	}
 	path := "files/file_tasks.md"
 	taskTitle := "task 1"
 	key := path + "|" + taskTitle
 
-	allTasksMap, err := getAllTasksMdPath(".")
+	allTasksMap, err := GetAllTasksMdPath(".")
 	_, ok := allTasksMap[key]
 	if !ok {
 		return // task 1 does not exist
@@ -46,7 +49,7 @@ func TestDoneTaskMD(t *testing.T) {
 		t.Fatalf(`Got error: %v`, err)
 	}
 
-	allTasksMap, err = getAllTasksMdPath(".")
+	allTasksMap, err = GetAllTasksMdPath(".")
 	if err != nil {
 		t.Fatalf(`Got error: %v`, err)
 	}

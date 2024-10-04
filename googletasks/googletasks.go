@@ -3,6 +3,7 @@ package googletasks
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -22,8 +23,12 @@ func getClient(config *oauth2.Config) *http.Client {
 	tokFile := "../auth_files/token.json"
 	tok, err := tokenFromFile(tokFile)
 	if err != nil {
-		tok = getTokenFromWeb(config)
-		saveToken(tokFile, tok)
+		tokFile = "./auth_files/token.json"
+		tok, err = tokenFromFile(tokFile)
+		if err != nil {
+			tok = getTokenFromWeb(config)
+			saveToken(tokFile, tok)
+		}
 	}
 	return config.Client(context.Background(), tok)
 }
@@ -73,7 +78,10 @@ func getService() (*tasks.Service, error) {
 	ctx := context.Background()
 	b, err := os.ReadFile("../auth_files/credentials.json")
 	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
+		b, err = os.ReadFile("./auth_files/credentials.json")
+		if err != nil {
+			log.Fatalf("Unable to read client secret file: %v", err)
+		}
 	}
 
 	// If modifying these scopes, delete your previously saved token.json.
@@ -85,7 +93,30 @@ func getService() (*tasks.Service, error) {
 	return tasks.NewService(ctx, option.WithHTTPClient(client))
 }
 
-func GetAllTasksGoogle() map[string]tasks.Task {
+func GetTasksListId(taskListTitle string) (string, error) {
+	srv, err := getService()
+	if err != nil {
+		return "", err
+	}
+
+	r, err := srv.Tasklists.List().Do()
+	if err != nil {
+		return "", err
+	}
+
+	if len(r.Items) > 0 {
+		for _, i := range r.Items {
+			if i.Title == taskListTitle {
+				return i.Id, nil
+			}
+		}
+	} else {
+		return "", errors.New("No task lists found.")
+	}
+	return "", errors.New("No task list matching found")
+}
+
+func GetAllTasksGoogle(taskListTitle string) map[string]tasks.Task {
 	srv, err := getService()
 	if err != nil {
 		log.Fatalf("Unable to retrieve tasks Client %v", err)
@@ -99,12 +130,14 @@ func GetAllTasksGoogle() map[string]tasks.Task {
 	tasksMap := make(map[string]tasks.Task)
 	if len(r.Items) > 0 {
 		for _, i := range r.Items {
-			t, err := srv.Tasks.List(i.Id).Do()
-			if err != nil {
-				log.Fatalf("Unable to retrieve tasks from task lists. %v", err)
-			}
-			for _, j := range t.Items {
-				tasksMap[j.Notes+"|"+j.Title] = *j
+			if i.Title == taskListTitle {
+				t, err := srv.Tasks.List(i.Id).ShowHidden(true).Do()
+				if err != nil {
+					log.Fatalf("Unable to retrieve tasks from task lists. %v", err)
+				}
+				for _, j := range t.Items {
+					tasksMap[j.Notes+"|"+j.Title] = *j
+				}
 			}
 		}
 	} else {
