@@ -113,8 +113,13 @@ func GetAllTasksGoogle() map[string]tasks.Task {
 	return tasksMap
 }
 
-func DoneTaskGoogle(input string) (string, error) {
-	return "That", nil
+func DoneTaskGoogle(taskListId string, taskId string, taskGoogle *tasks.Task) (*tasks.Task, error) {
+	srv, err := getService()
+	if err != nil {
+		log.Fatalf("Unable to retrieve tasks Client %v", err)
+	}
+
+	return srv.Tasks.Update(taskListId, taskId, taskGoogle).Do()
 }
 
 func AddTaskGoogle(taskListId string, taskGoogle *tasks.Task) (*tasks.Task, error) {

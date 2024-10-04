@@ -1,7 +1,6 @@
 package googletasks
 
 import (
-	"regexp"
 	"testing"
 
 	"google.golang.org/api/tasks/v1"
@@ -31,11 +30,32 @@ func TestGetAllTasksGoogle(t *testing.T) {
 }
 
 func TestDoneTaskGoogle(t *testing.T) {
-	input := "This"
-	want := regexp.MustCompile(`\bThat\b`)
-	msg, err := DoneTaskGoogle(input)
-	if !want.MatchString(msg) || err != nil {
-		t.Fatalf(`This = %q, %v, want match for %#q, nil`, msg, err, want)
+	taskListId := "VGJNRnByS3dTZk9aVy02MQ"
+	taskTitle := "Testing task update with Go"
+	taskNotes := "Notes are here?"
+	taskIdMd := taskNotes + "|" + taskTitle
+
+	taskGoogle := tasks.Task{
+		Title: taskTitle,
+		Notes: taskNotes,
+	}
+
+	wantTask, err := AddTaskGoogle(taskListId, &taskGoogle)
+	if err != nil {
+		t.Fatalf(`Got error: %v`, err)
+	}
+
+	wantTask.Status = "completed"
+	updateTaskGoogle, err := DoneTaskGoogle(taskListId, wantTask.Id, wantTask)
+
+	if updateTaskGoogle.Status != wantTask.Status {
+		t.Fatalf(`Status of %v != %v`, updateTaskGoogle.Title, wantTask.Title)
+	}
+
+	allTasksMap := GetAllTasksGoogle()
+
+	if allTasksMap[taskIdMd].Status != wantTask.Status {
+		t.Fatalf(`Status of %v != %v`, allTasksMap[taskIdMd].Title, wantTask.Title)
 	}
 }
 
